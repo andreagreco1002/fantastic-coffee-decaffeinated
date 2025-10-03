@@ -749,6 +749,10 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         "401":
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "409":
           description: Conflict (group with same name already exists for the user)
           content:
@@ -767,18 +771,18 @@ paths:
           
         
   /groups/{groupId}:
+    parameters:
+      - name: groupId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
     get:
       operationId: getGroupDetails
       summary: Get group details
       description: Retrieve details of a specific group, including name, photo, members, and recent   messages
-      parameters:
-        - name: groupId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-            example: "550e8400-e29b-41d4-a716-446655440000"
       responses:
         "200":
           description: Group details retrieved successfully
@@ -817,14 +821,6 @@ paths:
       operationId: updateGroup
       summary: Update group information
       description: Update one or more fields of a group. Only group members with permission can perform this action.
-      parameters:
-        - name: groupId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-            example: "550e8400-e29b-41d4-a716-446655440000"
       requestBody:
         required: true
         content:
