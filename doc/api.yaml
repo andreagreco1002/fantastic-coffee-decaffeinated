@@ -1048,7 +1048,7 @@ components:
           example: "+123456789"
         profilePhotoUrl:
           type: string
-          format: uri
+          format: url
           example: "https://cdn.wasatext.com/profiles/alice.png"
       required:
         - username
@@ -1143,7 +1143,7 @@ components:
           example: "text"
         mediaUrl:
           type: string
-          format: uri
+          format: url
           nullable: true
           example: "https://cdn.wasatext.com/uploads/photo123.jpg"
         sentAt:
@@ -1180,7 +1180,7 @@ components:
           example: "Family Group"
         photoUrl:
           type: string
-          format: uri
+          format: url
           example: "https://cdn.wasatext.com/images/group1.png"
         members:
           type: array
@@ -1201,7 +1201,7 @@ components:
           example: "Family Group"
         photoUrl:
           type: string
-          format: uri
+          format: url
           nullable: true
           example: "https://cdn.wasatext.com/groups/family.png"
         members:
@@ -1254,7 +1254,7 @@ components:
           example: "Weekend Plans"
         photoUrl:
           type: string
-          format: uri
+          format: url
           example: "https://cdn.wasatext.com/groups/weekend.png"
 
 
@@ -1271,7 +1271,7 @@ components:
           example: "text"
         mediaUrl:
           type: string
-          format: uri
+          format: url
           nullable: true
           example: "https://cdn.wasatext.com/uploads/photo123.jpg"
         replyTo:
@@ -1311,7 +1311,7 @@ components:
           example: "Family Group"
         photoUrl:
           type: string
-          format: uri
+          format: url
           nullable: true
           example: "https://cdn.wasatext.com/groups/family.png"
       required:
