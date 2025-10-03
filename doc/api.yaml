@@ -1077,8 +1077,8 @@ components:
           example: "+123456789"
         profilePhotoUrl:
           type: string
-      format: url
-      example: "https://cdn.wasatext.com/profiles/alice_new.png"
+          format: url
+          example: "https://cdn.wasatext.com/profiles/alice_new.png"
       
     UserSummary:
       type: object
