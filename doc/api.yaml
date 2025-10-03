@@ -186,14 +186,14 @@ paths:
           
           
   /users/{userId}:
-      parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: integer
-            format: int64
-            example: 10
+    parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+          example: 10
     patch:
       operationId: updateUser
       summary: Update user profile information
