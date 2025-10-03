@@ -271,9 +271,12 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Conversation"
+                type: object
+                properties:
+                  conversations:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Conversation"
         "401":
           description: Unauthorized
           content:
@@ -433,9 +436,6 @@ paths:
 
   /conversations/{conversationId}/messages:
     get:
-      operationId: getMessages
-      summary: Get conversation messages
-      description: Retrieve messages from a specific conversation, optionally paginated or filtered
       parameters:
         - name: conversationId
           in: path
@@ -444,6 +444,10 @@ paths:
             type: string
             format: uuid
             example: "550e8400-e29b-41d4-a716-446655440000"
+      operationId: getMessages
+      summary: Get conversation messages
+      description: Retrieve messages from a specific conversation, optionally paginated or filtered
+      parameters:
         - name: limit
           in: query
           required: false
@@ -471,9 +475,12 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Message"
+                type: object
+                properties:
+                  messages:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Message"
         "401":
           description: Unauthorized
           content:
@@ -501,20 +508,13 @@ paths:
       security:
         - bearerAuth: []                
 
+
     post:
       operationId: sendMessage
       summary: Send a new message
       description: Send a new text or photo message to a conversation.  
         - Use `replyTo` to reply to an existing message.  
-        - Use `forwardFrom` to forward an existing message.  
-      parameters:
-        - name: conversationId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-            example: "550e8400-e29b-41d4-a716-446655440000"
+        - Use `forwardFrom` to forward an existing message.
       requestBody:
         required: true
         content:
