@@ -71,7 +71,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserSummary"
-       "400":
+        "400":
           description: Invalid request (username already in use)
           content:
             application/json:
