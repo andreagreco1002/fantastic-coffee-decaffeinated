@@ -47,7 +47,7 @@ paths:
         
   
   
-  /setMyUserName:
+  /set_my_user_name:
     post:
       operationId: setMyUserName
       summary: Create or modify the username
@@ -59,24 +59,41 @@ paths:
             schema:
               type: object
               properties:
-                username:
+               username:
                   type: string
                   example: "newUsername123"
               required:
-                - username
-      responses:
+               - username
+     responses:
         "200":
           description: Username updated successfully
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserSummary"
-        "400":
+       "400":
           description: Invalid request (username already in use)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Username already in use"
         "401":
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Unauthorized access"
       security:
         - bearerAuth: []
+
           
           
           
@@ -100,10 +117,34 @@ paths:
                 $ref: "#/components/schemas/User"
         "400":
           description: Bad request (missing or invalid fields)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Missing required fields or invalid input"
         "409":
           description: Conflict (username or email already exists)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Username or email already exists"
         "500":
           description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Unexpected server error"
       
           
     get:
@@ -137,13 +178,35 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                 $ref: "#/components/schemas/UserSummary"
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/UserSummary"
+                  total:
+                    type: integer
+                    example: 42
         "401":
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Unauthorized access"
         "500":
           description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Unexpected server error"
           
           
           
@@ -185,14 +248,6 @@ paths:
       operationId: getUser
       summary: Get user profile
       description: Retrieve the full profile of a specific user by ID
-      parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: integer
-            format: int64
-            example: 10
       responses:
         "200":
           description: User retrieved successfully
