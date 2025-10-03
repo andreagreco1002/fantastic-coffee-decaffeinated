@@ -435,18 +435,19 @@ paths:
               
 
   /conversations/{conversationId}/messages:
+    parameters:
+      - name: conversationId
+        in: path
+        required: true
+        schema:
+           type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
     get:
       operationId: getMessages
       summary: Get conversation messages
       description: Retrieve messages from a specific conversation, optionally paginated or filtered
       parameters:
-        - name: conversationId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-            example: "550e8400-e29b-41d4-a716-446655440000"
         - name: limit
           in: query
           required: false
