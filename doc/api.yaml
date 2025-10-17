@@ -1,273 +1,1352 @@
-openapi: 3.0.0
-servers:
-  - url: "http://localhost:3000"
+openapi: 3.0.3
 info:
-  title: Fantastic Coffee (decaffeinated)
-  description: Fantastic Coffee (decaffeinated), the skeleton project for Web and Software architecture course
+  title: WasaText API
+  description: API for the WasaText web application, used for user management and messaging.
   version: 1.0.0
+servers:
+  - url: http://localhost:8080/v1
+    description: Local development server
+
+tags:
+  - name: login
+    description: Endpoints related to user login and session management
+  - name: users
+    description: Operations for user management
+  - name: conversations
+    description: Manage conversations between users
+  - name: messages
+    description: Message sending, replying, forwarding, and reactions
+  - name: groups
+    description: Group creation and member management
+
+
+
+
 paths:
-  /status:
-    parameters:
-      - $ref: "#/components/parameters/XAppBuild"
-      - $ref: "#/components/parameters/XAppVersion"
-      - $ref: "#/components/parameters/XAppLanguage"
-      - $ref: "#/components/parameters/XAppPlatform"
-    get:
-      tags: ["General"]
-      operationId: getStatusMessage
-      summary: Get status message for the user about issues / updates
+  /session:
+    post:
+      tags: ["login"]
+      summary: Logs in the user
       description: |-
-        The response contains a status message meant for the user. It might
-        contains information about current technical issues, update messages
-        or general information.
+        If the user does not exist, it will be created, and identifieris returned.
+        If the user exists, the user identifier is returned.
+      operationId: doLogin
+      requestBody:
+        description: User details
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Payload containing the user name for login or creation
+              properties:
+                name:
+                  type: string
+                  description: Name of the user to log in or create
+                  example: Maria
+                  pattern: "^.*?$"
+                  minLength: 3
+                  maxLength: 16
+        required: true
       responses:
-        "200":
-          description: Status message available
+        "201":
+          description: User log-in action succesful
+          content: 
+            application/json:
+              schema:
+                type: object
+                description: Response with unique identifier of the user
+                properties:
+                  identifier:
+                    type: string
+                    description: Unique identifier assigned to the user
+                    example: "abcdef012345"
+              examples:
+                loginSuccess:
+                  summary: Successful login or creation response
+                  value:
+                    identifier: "abcdef012345"
+
+              
+
+
+
+  /me/username:
+    put:
+      tags:
+        ["users"]
+      summary: Update the current user's username
+      description: Allows the authenticated user to change their username. The new username must be unique and follow allowed naming rules.
+      operationId: setMyUserName
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Payload containing the new username
+              required:
+                - username
+              properties:
+                username:
+                  type: string
+                  minLength: 3
+                  maxLength: 20
+                  pattern: '^[a-zA-Z0-9_]+$'
+                  description: Unique username. Alphanumeric characters and underscores only.
+            example:
+              username: new_user123
+      responses:
+        '200':
+          description: Updated user profile including new username
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/StatusInfo"
-        "400": { $ref: "#/components/responses/BadRequest" }
-        "500": { $ref: "#/components/responses/InternalServerError" }
-
-  /:
-    get:
-      tags: ["Group 1"]
-      operationId: index
-      summary: Get an index
-      description: |-
-        This is an example of an index API description
-      responses:
-        "200":
-          description: Successful
-        "400": { $ref: "#/components/responses/BadRequest" }
-        "500": { $ref: "#/components/responses/InternalServerError" }
-  /context:
-    parameters:
-      - $ref: "#/components/parameters/XAppBuild"
-      - $ref: "#/components/parameters/XAppVersion"
-      - $ref: "#/components/parameters/XAppLanguage"
-      - $ref: "#/components/parameters/XAppPlatform"
-    post:
-      tags: ["Group 1"]
-      operationId: getContext
-      summary: Another API example
-      description: |-
-        Example description 2
-      responses:
-        "200":
-          description: Request ok
-          headers:
-            X-Access-Token:
-              description: Access token for authenticated requests
-              schema: { type: string }
-        "500": { $ref: "#/components/responses/InternalServerError" }
-  /authenticated:
-    parameters:
-      - $ref: "#/components/parameters/XAppBuild"
-      - $ref: "#/components/parameters/XAppVersion"
-      - $ref: "#/components/parameters/XAppLanguage"
-      - $ref: "#/components/parameters/XAppPlatform"
-    get:
-      tags: ["Group 2"]
-      operationId: getAuthenticatedExample
-      summary: Get an endpoint with authentication
-      description: |-
-        Get an endpoint with auth
-      security:
-        - LegacyAuth: []
-        - AppToken: []
-      responses:
-        "200":
-          description: Logout successful
-        "500": { $ref: "#/components/responses/InternalServerError" }
-
-  /pictures/{cat}:
-    parameters:
-      - $ref: "#/components/parameters/XAppBuild"
-      - $ref: "#/components/parameters/XAppVersion"
-      - $ref: "#/components/parameters/XAppLanguage"
-      - $ref: "#/components/parameters/XAppPlatform"
-      - $ref: "#/components/parameters/cat"
-    get:
-      tags: ["Cat pictures"]
-      operationId: getCatFromPicture
-      summary: Example of a parameter in URL
-      description: |-
-        Example of a parameter in URL
-      security:
-        - LegacyAuth: []
-      responses:
-        "200":
-          description: Student picture found
+                $ref: '#/components/schemas/User'
+              examples:
+                updatedProfile:
+                  summary: Updated user profile
+                  value:
+                    username: new_user123
+                    displayName: Maria
+                    photoUrl: https://cdn.wasatext.com/profiles/maria.png
+        '409':
+          description: The desired username is already taken
           content:
-            image/png:
+            application/json:
               schema:
-                type: string
-                format: binary
-              example: Picture binary file
-        "404":
-          description: Student picture not found
-        "500": { $ref: "#/components/responses/InternalServerError" }
+                type: object
+                description: Conflict response with an error message
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+              example:
+                error: Username 'new_user123' is already in use.
+      security:
+        - bearerAuth: []
 
 
-  /autofeeder/{cat}:
-    parameters:
-      - $ref: "#/components/parameters/XAppBuild"
-      - $ref: "#/components/parameters/XAppVersion"
-      - $ref: "#/components/parameters/XAppLanguage"
-      - $ref: "#/components/parameters/XAppPlatform"
-      - $ref: "#/components/parameters/cat"
+
+
+
+  /me/photo:
     put:
-      tags: ["Autofeeder"]
-      operationId: createCatAutofeeder
-      summary: Example of PUT operation
-      security:
-        - LegacyAuth: []
-      responses:
-        "200":
-          description: Auto feed enabled
-        "400": { $ref: "#/components/responses/BadRequest" }
-        "500": { $ref: "#/components/responses/InternalServerError" }
-    delete:
-      tags: ["Autofeeder"]
-      operationId: deleteCatAutofeeder
-      summary: Example of DELETE operation
-      security:
-        - LegacyAuth: []
-      responses:
-        "200":
-          description: Auto feed disabled
-        "400": { $ref: "#/components/responses/BadRequest" }
-        "500": { $ref: "#/components/responses/InternalServerError" }
-
-  /session/login:
-    parameters:
-      - $ref: "#/components/parameters/XAppBuild"
-      - $ref: "#/components/parameters/XAppVersion"
-      - $ref: "#/components/parameters/XAppLanguage"
-      - $ref: "#/components/parameters/XAppPlatform"
-    post:
-      tags: ["Session management"]
-      operationId: login
-      summary: Log-in into system
-      description: |-
-        Perform a log-in action using username and password credentials.
-        Returns a token which can be used in authenticated requests.
+      tags:
+        ["users"]
+      summary: Update the current user's profile photo
+      description: Allows the authenticated user to update their profile picture by providing a valid image URL.
+      operationId: setMyPhoto
       requestBody:
+        required: true
         content:
-          application/x-www-form-urlencoded:
+          application/json:
             schema:
               type: object
+              description: Payload containing the new profile photo URL
+              required:
+                - photoUrl
               properties:
-                userid:
+                photoUrl:
                   type: string
-                  pattern: '^[a-zA-Z0-9]+$'
-                  minLength: 3
-                  maxLength: 255
-                password:
-                  type: string
-                  pattern: '^.*?$'
-                  minLength: 8
-                  maxLength: 255
+                  format: url
+                  minLength: 10
+                  maxLength: 2048
+                  pattern: '^https?:\/\/.*$'
+                  description: URL to the new profile photo. Must be a valid HTTP or HTTPS link.
+            example:
+              photoUrl: "https://cdn.wasatext.com/profiles/maria.png"
+      responses:
+        '200':
+          description: Updated user profile including new photo URL
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+              examples:
+                updatedProfile:
+                  summary: Updated user profile
+                  value:
+                    username: maria123
+                    displayName: Maria
+                    photoUrl: https://cdn.wasatext.com/profiles/maria.png
+      security:
+        - bearerAuth: []
+
+
+
+  /me:
+    get:
+      tags: ["users"]
+      summary: Get current user's profile
+      description: Returns the full profile information of the authenticated user, including username, display name, and profile photo URL.
+      operationId: getMyProfile
+      responses:
+        '200':
+          description: User profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+              examples:
+                userProfile:
+                  summary: Example user profile
+                  value:
+                    username: maria123
+                    displayName: Maria
+                    photoUrl: https://cdn.wasatext.com/profiles/maria.png
+      security:
+        - bearerAuth: []
+
+
+
+  /users:
+    get:
+      tags: ["users"]
+      summary: Search for users by username
+      description: Allows the authenticated user to search for other WASAText users by partial or full username match.
+      operationId: searchUsers
+      parameters:
+        - name: username
+          in: query
+          required: true
+          description: Partial or full username to search for. Alphanumeric characters and underscores only.
+          schema:
+            type: string
+            minLength: 3
+            maxLength: 20
+            pattern: '^[a-zA-Z0-9_]+$'
+            description: Partial or full username to search for. Must be alphanumeric with optional underscores.
+      responses:
+        '200':
+          description: List of users matching the search query
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Response object containing matched users
+                required:
+                  - users
+                properties:
+                  users:
+                    type: array
+                    minItems: 0
+                    maxItems: 50
+                    description: List of public user profiles matching the search term
+                    items:
+                      $ref: '#/components/schemas/PublicUser'
+              examples:
+                userSearchResults:
+                  summary: Matching users
+                  value:
+                    users:
+                      - username: alessio_dev
+                        displayName: Alessio
+                      - username: alice98
+                        displayName: Alice
+      security:
+        - bearerAuth: []
+
+
+
+
+  /users/{username}:
+    get:
+      tags: ["users"]
+      summary: Get public profile of a specific user
+      description: Returns the public information of a WASAText user identified by their username. Only public fields such as display name are returned.
+      operationId: getUserById
+      parameters:
+        - name: username
+          in: path
+          required: true
+          description: Unique username of the user to retrieve. Alphanumeric characters and underscores only.
+          schema:
+            type: string
+            minLength: 3
+            maxLength: 20
+            pattern: '^[a-zA-Z0-9_]+$'
+      responses:
+        '200':
+          description: Public user profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicUser'
+              examples:
+                publicUserExample:
+                  summary: Example public profile
+                  value:
+                    username: alessio_dev
+                    displayName: Alessio
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Error response when user is not found
+                properties:
+                  error:
+                    type: string
+                    description: Description of the error
+              example:
+                error: User 'wrong_username' not found.
+      security:
+        - bearerAuth: []
+
+
+
+
+
+  /me/conversations:
+    get:
+      tags: ["conversations"]
+      summary: List user conversations
+      description: Returns a list of the authenticated user's active conversations (with other users or groups), sorted by latest message first.
+      operationId: getMyConversations
       responses:
         "200":
-          description: Login successful
-          headers:
-            X-Access-Token:
-              description: Access token for authenticated requests
-              schema: { type: string }
-        "400": { $ref: "#/components/responses/BadRequest" }
-        "403":
-          description: Login failed
-          headers:
-            X-Message:
-              description: Error message
-              schema: { type: string }
-        "500": { $ref: "#/components/responses/InternalServerError" }
+          description: List of conversations
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Container for the list of conversations
+                required:
+                  - conversations
+                properties:
+                  conversations:
+                    type: array
+                    description: Conversations ordered from most to least recent
+                    minItems: 0
+                    maxItems: 100
+                    items:
+                      $ref: '#/components/schemas/ConversationPreview'
+              examples:
+                userConversations:
+                  summary: Example list of conversations
+                  value:
+                    conversations:
+                      - conversationId: conv123
+                        title: "Luca"
+                        photoUrl: "https://cdn.wasatext.com/users/luca.jpg"
+                        lastMessageSnippet: "See you soon!"
+                        lastMessageTimestamp: "2025-10-10T12:30:00Z"
+                        lastMessageType: text
+                      - conversationId: group456
+                        title: "Group Chat"
+                        photoUrl: "https://cdn.wasatext.com/groups/groupchat.jpg"
+                        lastMessageSnippet: "[GIF]"
+                        lastMessageTimestamp: "2025-10-10T11:20:00Z"
+                        lastMessageType: gif
+      security:
+        - bearerAuth: []
+
+
+
+  /conversations/{conversationId}:
+    get:
+      tags: ["conversations"]
+      summary: Get messages from a specific conversation
+      description: Returns all messages in the given conversation, sorted by newest first. Only visible to participants.
+      operationId: getConversation
+      parameters:
+        - name: conversationId
+          in: path
+          required: true
+          description: Unique identifier of the conversation
+          schema:
+            type: string
+            minLength: 6
+            maxLength: 64
+            pattern: '^[a-zA-Z0-9_-]+$'
+      responses:
+        '200':
+          description: List of messages from the conversation
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Response object containing the messages in the conversation
+                required:
+                  - messages
+                properties:
+                  messages:
+                    type: array
+                    minItems: 0
+                    maxItems: 200
+                    description: List of messages in the conversation, sorted in reverse chronological order
+                    items:
+                      $ref: '#/components/schemas/Message'
+              examples:
+                conversationMessages:
+                  summary: Example conversation with messages
+                  value:
+                    messages:
+                      - messageId: msg1
+                        sender:
+                          username: luca_dev
+                          displayName: Luca
+                        content: Hey, are we still meeting today?
+                        timestamp: "2025-10-10T09:00:00Z"
+                        status: sent
+                        reactions: []
+                      - messageId: msg2
+                        sender:
+                          username: maria98
+                          displayName: Maria
+                        content: Yes! Same place?
+                        timestamp: "2025-10-10T09:01:00Z"
+                        status: read
+                        reactions: []
+        '404':
+          description: Conversation not found
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Error when conversation does not exist
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+              example:
+                error: Conversation not found
+      security:
+        - bearerAuth: []
+
+
+
+    delete:
+      tags: ["conversations"]
+      summary: Remove a conversation from the user's list
+      description: Allows the authenticated user to leave or remove a conversation. The conversation is no longer visible to them, but remains for other participants.
+      operationId: deleteConversation
+      parameters:
+        - name: conversationId
+          in: path
+          required: true
+          description: Unique identifier of the conversation to delete
+          schema:
+            type: string
+            minLength: 6
+            maxLength: 64
+            pattern: '^[a-zA-Z0-9_-]+$'
+      responses:
+        '200':
+          description: Conversation successfully removed from the user's list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conversation'
+              examples:
+                deletedConversation:
+                  summary: User removed from the conversation
+                  value:
+                    conversationId: conv456
+                    participants:
+                      - username: alice_dev
+                        displayName: Alice
+                      - username: mario23
+                        displayName: Mario
+                    lastMessage:
+                      messageId: msg123
+                      sender:
+                        username: mario23
+                        displayName: Mario
+                      content: Hi Alice!
+                      timestamp: "2025-10-10T09:45:00Z"
+                      status: sent
+                    updatedAt: "2025-10-10T09:45:00Z"
+        '404':
+          description: Conversation not found
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Error when the conversation does not exist
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+              example:
+                error: Conversation not found
+      security:
+        - bearerAuth: []
+
+
+
+  /conversations:
+    post:
+      tags: ["conversations"]
+      summary: Start a new one-on-one conversation
+      description: Starts a new conversation between the authenticated user and the specified recipient. If a conversation already exists, it will be returned.
+      operationId: startConversation
+      requestBody:
+        required: true
+        description: The username of the recipient user
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Payload with recipient user information
+              required:
+                - recipientUsername
+              properties:
+                recipientUsername:
+                  type: string
+                  description: Username of the other user to start a conversation with
+                  minLength: 3
+                  maxLength: 20
+                  pattern: '^[a-zA-Z0-9_]+$'
+            example:
+              recipientUsername: alice_dev
+      responses:
+        '201':
+          description: New conversation created or existing conversation returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conversation'
+              examples:
+                newConversation:
+                  summary: Conversation successfully created
+                  value:
+                    conversationId: conv456
+                    participants:
+                      - username: mario23
+                        displayName: Mario
+                      - username: alice_dev
+                        displayName: Alice
+                    lastMessage:
+                      messageId: msg123
+                      sender:
+                        username: mario23
+                        displayName: Mario
+                      content: Hi Alice!
+                      timestamp: "2025-10-10T09:45:00Z"
+                      status: sent
+                    updatedAt: "2025-10-10T09:45:00Z"
+        '409':
+          description: Cannot start a conversation with yourself
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Error when trying to start a conversation with self
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+              example:
+                error: Cannot start a conversation with yourself.
+      security:
+        - bearerAuth: []
+
+
+
+
+  /conversations/{conversationId}/messages:
+    post:
+      tags: ["messages"]
+      summary: Send a message in a conversation
+      description: Sends a new message (text or GIF) from the authenticated user to the specified conversation. The message can optionally be a reply to another message.
+      operationId: sendMessage
+      parameters:
+        - name: conversationId
+          in: path
+          required: true
+          description: Unique identifier of the conversation where the message is sent
+          schema:
+            type: string
+            minLength: 6
+            maxLength: 64
+            pattern: '^[a-zA-Z0-9_-]+$'
+      requestBody:
+        required: true
+        description: Content of the message to be sent
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Message creation payload
+              required:
+                - content
+              properties:
+                content:
+                  type: string
+                  description: The message content (text or GIF URL)
+                  minLength: 1
+                  maxLength: 2000
+                  pattern: '^.*$'
+                replyToMessageId:
+                  type: string
+                  description: Optional message ID being replied to
+                  minLength: 6
+                  maxLength: 64
+                  pattern: '^[a-zA-Z0-9_-]+$'
+            example:
+              content: "Hey, are you free later?"
+      responses:
+        "201":
+          description: Message sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+              examples:
+                messageSent:
+                  summary: Example of message response
+                  value:
+                    messageId: msg789
+                    sender:
+                      username: luca_dev
+                      displayName: Luca
+                    content: "Hey, are you free later?"
+                    timestamp: "2025-10-10T10:00:00Z"
+                    status: sent
+                    replyToMessageId: msg123
+                    reactions: []
+        "404":
+          description: Conversation not found
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Returned when the conversation does not exist
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+              example:
+                error: Conversation not found
+      security:
+        - bearerAuth: []
+
+
+
+
+  /messages/{messageId}/forward:
+    post:
+      tags: ["messages"]
+      summary: Forward a message to another conversation
+      description: Forwards an existing message to a specified conversation. The forwarded message will appear as a new message sent by the authenticated user.
+      operationId: forwardMessage
+      parameters:
+        - name: messageId
+          in: path
+          required: true
+          description: ID of the message to be forwarded
+          schema:
+            type: string
+            minLength: 6
+            maxLength: 64
+            pattern: '^[a-zA-Z0-9_-]+$'
+      requestBody:
+        required: true
+        description: Target conversation to which the message should be forwarded
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Payload to indicate destination conversation
+              required:
+                - conversationId
+              properties:
+                conversationId:
+                  type: string
+                  description: ID of the target conversation
+                  minLength: 6
+                  maxLength: 64
+                  pattern: '^[a-zA-Z0-9_-]+$'
+            example:
+              conversationId: conv123
+      responses:
+        "201":
+          description: Message successfully forwarded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+              examples:
+                forwardedMessage:
+                  summary: Example of a forwarded message
+                  value:
+                    messageId: msg999
+                    sender:
+                      username: luca_dev
+                      displayName: Luca
+                    content: "Check this out!"
+                    timestamp: "2025-10-10T11:00:00Z"
+                    status: sent
+                    reactions: []
+        "404":
+          description: Message or target conversation not found
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Returned if message or destination conversation does not exist
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+              example:
+                error: Message or conversation not found
+      security:
+        - bearerAuth: []
+
+
+
+
+
+  /messages/{messageId}/comment:
+    post:
+      tags: ["messages"]
+      summary: Add a reaction to a message
+      description: Adds a reaction (emoji) to the specified message. Each user can react only once per message.
+      operationId: commentMessage
+      parameters:
+        - name: messageId
+          in: path
+          required: true
+          description: ID of the message to react to
+          schema:
+            type: string
+            minLength: 6
+            maxLength: 64
+            pattern: '^[a-zA-Z0-9_-]+$'
+      requestBody:
+        required: true
+        description: Emoji to use as a reaction
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Reaction creation payload
+              required:
+                - emoji
+              properties:
+                emoji:
+                  type: string
+                  description: Emoji reaction (e.g. 😄, ❤️)
+                  minLength: 1
+                  maxLength: 2
+                  pattern: '^.*$'
+            example:
+              emoji: "😄"
+      responses:
+        "201":
+          description: Reaction successfully added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reaction'
+              examples:
+                reactionCreated:
+                  summary: Example of a created reaction
+                  value:
+                    user:
+                      username: alice_dev
+                      displayName: Alice
+                    emoji: "😄"
+                    timestamp: "2025-10-10T11:10:00Z"
+        "404":
+          description: Message not found
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Returned if the message does not exist
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+              example:
+                error: Message not found
+      security:
+        - bearerAuth: []
+
+
+
+
+    delete:
+      tags: ["messages"]
+      summary: Remove your reaction from a message
+      description: Removes the emoji reaction added by the authenticated user from the specified message.
+      operationId: uncommentMessage
+      parameters:
+        - name: messageId
+          in: path
+          required: true
+          description: ID of the message from which to remove the reaction
+          schema:
+            type: string
+            minLength: 6
+            maxLength: 64
+            pattern: '^[a-zA-Z0-9_-]+$'
+      responses:
+        "204":
+          description: Reaction successfully removed
+        "404":
+          description: Message or user reaction not found
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Returned if the message or user’s reaction does not exist
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+              example:
+                error: Reaction not found
+      security:
+        - bearerAuth: []
+
+
+
+
+  /messages/{messageId}:
+    delete:
+      tags: ["messages"]
+      summary: Delete a message
+      description: Deletes a message previously sent by the authenticated user. This operation is allowed only if the message belongs to the user.
+      operationId: deleteMessage
+      parameters:
+        - name: messageId
+          in: path
+          required: true
+          description: ID of the message to delete
+          schema:
+            type: string
+            minLength: 6
+            maxLength: 64
+            pattern: '^[a-zA-Z0-9_-]+$'
+      responses:
+        "204":
+          description: Message successfully deleted
+        "404":
+          description: Message not found or not owned by the user
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Error if the message does not exist or cannot be deleted
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+              example:
+                error: Message not found
+      security:
+        - bearerAuth: []
+
+
+
+
+  /groups/{groupId}/members:
+    post:
+      tags: ["groups"]
+      summary: Add users to a group
+      description: Adds one or more users to the specified group. Only current members of the group are allowed to perform this operation.
+      operationId: addToGroup
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          description: ID of the group where users will be added
+          schema:
+            type: string
+            minLength: 6
+            maxLength: 64
+            pattern: '^[a-zA-Z0-9_-]+$'
+      requestBody:
+        required: true
+        description: Usernames to add to the group
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Payload with the list of usernames to add
+              required:
+                - usernames
+              properties:
+                usernames:
+                  type: array
+                  description: List of usernames to add to the group
+                  minItems: 1
+                  maxItems: 20
+                  items:
+                    type: string
+                    description: Username of the user to add
+                    minLength: 3
+                    maxLength: 16
+                    pattern: '^[a-zA-Z0-9_]+$'
+            example:
+              usernames: ["maria98", "gigi22"]
+      responses:
+        "200":
+          description: Group updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+              examples:
+                updatedGroup:
+                  summary: Group after adding users
+                  value:
+                    groupId: group_456
+                    name: "Friday Night Plans"
+                    photoUrl: "https://cdn.wasatext.com/groups/friday.png"
+                    participants:
+                      - username: luca_dev
+                        displayName: Luca
+                      - username: maria98
+                        displayName: Maria
+                      - username: gigi22
+                        displayName: Gigi
+        "404":
+          description: Group not found
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Returned if the group does not exist
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+              example:
+                error: Group not found
+      security:
+        - bearerAuth: []
+
+
+  
+
+
+  /groups/{groupId}/members/me:
+    delete:
+      tags: ["groups"]
+      summary: Leave a group
+      description: Allows the authenticated user to leave the specified group. If the user is not a member, an error is returned.
+      operationId: leaveGroup
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          description: ID of the group the user wants to leave
+          schema:
+            type: string
+            minLength: 6
+            maxLength: 64
+            pattern: '^[a-zA-Z0-9_-]+$'
+      responses:
+        "204":
+          description: Successfully left the group
+        "404":
+          description: Group not found or user is not a member
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Returned if the group does not exist or user is not a member
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+              example:
+                error: Group not found or not a member
+      security:
+        - bearerAuth: []
+
+
+
+
+
+  /groups/{groupId}/name:
+    put:
+      tags: ["groups"]
+      summary: Update group name
+      description: Updates the name of the specified group. Only accessible to current members of the group.
+      operationId: setGroupName
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          description: ID of the group to update
+          schema:
+            type: string
+            minLength: 6
+            maxLength: 64
+            pattern: '^[a-zA-Z0-9_-]+$'
+      requestBody:
+        required: true
+        description: New name to assign to the group
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Payload with the new group name
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  description: New name for the group
+                  minLength: 3
+                  maxLength: 50
+                  pattern: '^.*$'
+            example:
+              name: "Friends Planning"
+      responses:
+        "200":
+          description: Group name successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+              examples:
+                renamedGroup:
+                  summary: Group after name update
+                  value:
+                    groupId: group_456
+                    name: "Friends Planning"
+                    photoUrl: "https://cdn.wasatext.com/groups/friday.png"
+                    participants:
+                      - username: luca_dev
+                        displayName: Luca
+                      - username: maria98
+                        displayName: Maria
+        "404":
+          description: Group not found
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Returned if the group does not exist
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+              example:
+                error: Group not found
+      security:
+        - bearerAuth: []
+
+
+
+  
+
+  /groups/{groupId}/photo:
+    put:
+      tags: ["groups"]
+      summary: Update group photo
+      description: Updates the photo URL of the specified group. Only accessible to current members of the group.
+      operationId: setGroupPhoto
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          description: ID of the group to update
+          schema:
+            type: string
+            minLength: 6
+            maxLength: 64
+            pattern: '^[a-zA-Z0-9_-]+$'
+      requestBody:
+        required: true
+        description: New photo URL to assign to the group
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Payload with the new photo URL
+              required:
+                - photoUrl
+              properties:
+                photoUrl:
+                  type: string
+                  format: url
+                  description: New photo URL for the group
+                  minLength: 10
+                  maxLength: 2048
+                  pattern: '^https?://.*$'
+            example:
+              photoUrl: "https://cdn.wasatext.com/groups/newphoto.jpg"
+      responses:
+        "200":
+          description: Group photo successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+              examples:
+                updatedPhotoGroup:
+                  summary: Group after photo update
+                  value:
+                    groupId: group_456
+                    name: "Friends Planning"
+                    photoUrl: "https://cdn.wasatext.com/groups/newphoto.jpg"
+                    participants:
+                      - username: luca_dev
+                        displayName: Luca
+                      - username: maria98
+                        displayName: Maria
+        "404":
+          description: Group not found
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Returned if the group does not exist
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+              example:
+                error: Group not found
+      security:
+        - bearerAuth: []
+
+     
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 components:
   schemas:
-    StatusInfo:
-      title: Status Info
+    User:
       type: object
+      description: Full user profile including unique username, display name, and profile photo URL.
+      required:
+        - username
+        - displayName
+        - photoUrl
       properties:
+        username:
+          type: string
+          description: Unique identifier of the user. Alphanumeric and underscores only.
+        displayName:
+          type: string
+          description: Name displayed to other users in conversations and groups.
+        photoUrl:
+          type: string
+          format: url
+          description: Publicly accessible URL of the user's profile picture.
+
+    PublicUser:
+      type: object
+      description: Public user information used when viewing or searching other users.
+      required:
+        - username
+        - displayName
+      properties:
+        username:
+          type: string
+          description: Unique identifier of the user. Alphanumeric and underscores only.
+        displayName:
+          type: string
+          description: Name displayed to other users in search results or group members.
+
+
+    Conversation:
+      type: object
+      description: A conversation between two users containing metadata about the last message.
+      required:
+        - conversationId
+        - participants
+        - lastMessage
+        - updatedAt
+      properties:
+        conversationId:
+          type: string
+          description: Unique identifier of the conversation.
+          minLength: 6
+          maxLength: 64
+          pattern: '^[a-zA-Z0-9_-]+$'
+        participants:
+          type: array
+          description: The two users involved in the conversation.
+          minItems: 2
+          maxItems: 2
+          items:
+            $ref: '#/components/schemas/PublicUser'
+        lastMessage:
+          $ref: '#/components/schemas/Message'
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp of the latest message in the conversation.
+
+
+
+    Message:
+      type: object
+      description: Represents a message exchanged in a conversation. A message can be a standalone message, a reply to another message, and can include emoji reactions.
+      required:
+        - messageId
+        - sender
+        - content
+        - timestamp
+        - status
+      properties:
+        messageId:
+          type: string
+          description: Unique identifier of the message
+          minLength: 2
+          maxLength: 64
+          pattern: '^[a-zA-Z0-9_-]+$'
+        sender:
+          $ref: '#/components/schemas/PublicUser'
+        content:
+          type: string
+          description: Message content, can be plain text or a URL to a GIF/image
+          minLength: 1
+          maxLength: 2000
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp of when the message was sent, in ISO 8601 format
         status:
           type: string
-          enum:
-            - info
-            - warning
-            - critical
-            - ""
-        title: { type: string }
-        message: { type: string }
-        url: { type: string }
+          enum: [sent, received, read]
+          description: Delivery status of the message
+        replyToMessageId:
+          type: string
+          description: If present, this message is a reply to another message
+          minLength: 6
+          maxLength: 64
+          pattern: '^[a-zA-Z0-9_-]+$'
+        reactions:
+          type: array
+          description: Emoji reactions added by users to this message
+          minItems: 0
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/Reaction'
 
-  responses:
-    Unauthorized:
-      description: The access token is missing or it's expired
-    BadRequest:
-      description: The request was not compliant with the documentation (eg. missing fields, etc)
-    InternalServerError:
-      description: The server encountered an internal error. Further info in server logs
+
+
+    Reaction:
+      type: object
+      description: An emoji reaction added by a user to a message.
+      required:
+        - user
+        - emoji
+        - timestamp
+      properties:
+        user:
+          $ref: '#/components/schemas/PublicUser'
+        emoji:
+          type: string
+          description: Emoji used in the reaction (e.g. 😊, ❤️)
+          minLength: 1
+          maxLength: 2
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp when the reaction was added, in ISO 8601 format
+
+
+    Group:
+      type: object
+      description: Represents a group conversation. Only visible to members. Contains a name, profile photo, and list of participants.
+      required:
+        - groupId
+        - name
+        - photoUrl
+        - participants
+      properties:
+        groupId:
+          type: string
+          description: Unique identifier of the group
+          minLength: 6
+          maxLength: 64
+          pattern: '^[a-zA-Z0-9_-]+$'
+        name:
+          type: string
+          description: Name of the group shown to participants
+          minLength: 3
+          maxLength: 50
+          pattern: '^.*$'
+        photoUrl:
+          type: string
+          description: URL to the group photo
+          format: url
+        participants:
+          type: array
+          description: List of users who are currently members of the group
+          minItems: 1
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/PublicUser'
+
+
+
+    ConversationPreview:
+      type: object
+      description: Summary of a conversation with either a user or a group. Used to display a list of conversations for the authenticated user.
+      required:
+        - conversationId
+        - title
+        - photoUrl
+        - lastMessageSnippet
+        - lastMessageTimestamp
+        - lastMessageType
+      properties:
+        conversationId:
+          type: string
+          description: Unique identifier of the conversation
+          minLength: 6
+          maxLength: 64
+          pattern: '^[a-zA-Z0-9_-]+$'
+        title:
+          type: string
+          description: Name of the group or username of the other user
+          minLength: 3
+          maxLength: 50
+          pattern: '^.*$'
+        photoUrl:
+          type: string
+          description: URL to the group photo or user profile photo
+          format: url
+          minLength: 10
+          maxLength: 2048
+          pattern: '^https?://.*$'
+        lastMessageSnippet:
+          type: string
+          description: Text preview of the latest message
+          minLength: 1
+          maxLength: 200
+          pattern: '^.*$'
+        lastMessageTimestamp:
+          type: string
+          format: date-time
+          description: Timestamp of the latest message in ISO 8601 format
+        lastMessageType:
+          type: string
+          enum: [text, gif]
+          description: Type of the last message in the conversation
+
+
+
 
   securitySchemes:
-    LegacyAuth:
-      type: apiKey
-      in: header
-      name: X-App-Token
-      description: |-
-        App session token value. This value is sent by the server in the login
-        and session refresh APIs.
-
-  parameters:
-    XAppVersion:
-      schema:
-        type: string
-        pattern: '^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$'
-        minLength: 1
-        maxLength: 10
-      name: X-App-Version
-      in: header
-      required: true
-      description: App human readable version ("semantic version" format)
-      allowEmptyValue: false
-    XAppBuild:
-      schema: { type: integer }
-      name: X-App-Build
-      in: header
-      required: true
-      description: App build number
-      allowEmptyValue: false
-    XAppLanguage:
-      schema:
-        type: string
-        pattern: '^[a-z]{2}([-_][A-Z]{2})?$'
-        minLength: 2
-        maxLength: 5
-      name: X-App-Language
-      in: header
-      required: true
-      description: App language in ISO 639-1 format
-      allowEmptyValue: false
-    XAppPlatform:
-      schema:
-        type: string
-        enum: [ios, android]
-      name: X-App-Platform
-      in: header
-      required: true
-      description: App operating system / platform
-      allowEmptyValue: false
-    cat:
-      schema:
-        type: string
-        pattern: '^[a-zA-Z]+$'
-        minLength: 3
-        maxLength: 10
-      name: cat
-      in: path
-      required: true
-      description: Cat
-      allowEmptyValue: false
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
